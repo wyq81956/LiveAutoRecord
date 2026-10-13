@@ -6,7 +6,7 @@ import formatTemplate from 'string-template'
 import { LARServerService } from '../LARServerService'
 import { NotificationService } from '../NotificationService'
 import { TabService } from '../TabService'
-import { i18n } from '../../i18n'
+import { i18n, setLocale } from '../../i18n'
 
 const getThrottledChannelNotifyFn = fastMemo(function createThrottledChannelNotifyFn(
   // 只是提供给 memoize 作为 cache 的 key，实际逻辑中不会使用。
@@ -16,10 +16,6 @@ const getThrottledChannelNotifyFn = fastMemo(function createThrottledChannelNoti
 })
 
 export async function init() {
-  const settings = await LARServerService.getSettings({})
-  RecordService.noticeOnRecordStart = settings.noticeOnRecordStart
-  RecordService.noticeFormat = settings.noticeFormat ?? ''
-
   const tryNoticeOnRecordStartMsg = tap<SSEMessage>((msg) => {
     // TODO: 后面看下优化后的通知效果，如果客户端下表现不太好，可以根据 isClientMode
     // 在客户端模式下由 electron main 发送通知。
@@ -48,9 +44,17 @@ export async function init() {
     if (msg.event !== 'settings_change') return
 
     RecordService.noticeOnRecordStart = msg.settings.noticeOnRecordStart
+    RecordService.noticeFormat = msg.settings.noticeFormat ?? ''
+    if (msg.settings.locale) setLocale(msg.settings.locale)
   })
 
   LARServerService.getServerMessages().pipe(updateNoticeSettingOnChange, tryNoticeOnRecordStartMsg).subscribe()
+
+  // 初次读取失败时仍保留订阅，后续设置更新可以恢复通知和语言状态。
+  const settings = await LARServerService.getSettings({})
+  RecordService.noticeOnRecordStart = settings.noticeOnRecordStart
+  RecordService.noticeFormat = settings.noticeFormat ?? ''
+  if (settings.locale) setLocale(settings.locale)
 }
 
 export const RecordService = {

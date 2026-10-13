@@ -1,4 +1,5 @@
 import { Command } from 'commander'
+import type { ProviderAuthStatus } from '@autorecord/manager'
 import { initManager, recorderManager, saveProviderAuthConfig } from '../core/manager-init'
 import { isJsonMode, logger, outputJson, outputSuccess, outputError, outputTable } from '../core/output'
 
@@ -23,7 +24,7 @@ Examples:
       const results = await Promise.all(
         recorderManager.providers.map(async (p) => {
           const hasAuth = !!p.authFields && p.authFields.length > 0
-          let status = { isAuthenticated: false, description: undefined as string | undefined }
+          let status: ProviderAuthStatus = { isAuthenticated: false }
           if (hasAuth && p.checkAuth) {
             try {
               status = await p.checkAuth()

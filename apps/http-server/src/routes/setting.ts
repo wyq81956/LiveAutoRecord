@@ -1,20 +1,20 @@
 import { Router } from 'express'
-import { Settings } from '@autorecord/shared'
 import { API } from './api_types'
 import { ServerOpts } from '../types'
 import { scheduleBroadcastMessage } from './event'
 import { asyncRouteHandler } from './utils'
+import { createSettingsUpdater } from '../settings'
 
 export function createRouter(serverOpts: ServerOpts) {
   const router = Router()
+  const updateSettings = createSettingsUpdater(serverOpts)
 
   async function getSettings(args: API.getSettings.Args): Promise<API.getSettings.Resp> {
     return serverOpts.getSettings()
   }
 
   async function setSettings(args: API.setSettings.Args): Promise<API.setSettings.Resp> {
-    const newSettings: Settings = args
-    return serverOpts.setSettings(newSettings)
+    return updateSettings(args)
   }
 
   router
@@ -26,7 +26,6 @@ export function createRouter(serverOpts: ServerOpts) {
     )
     .put(
       asyncRouteHandler(async (req, res) => {
-        // TODO: 这里先不做 schema 校验，以后再加
         const args = req.body as API.setSettings.Args
         const newSettings = await setSettings(args)
 

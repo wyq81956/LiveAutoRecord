@@ -1,8 +1,15 @@
 <template>
-  <v-card class="m-4" flat>
-    <v-card-title class="my-2 flex items-center justify-between gap-4">
-      <div class="flex items-center">
-        <v-icon icon="mdi-arrow-left" size="24" class="mr-2" @click="$router.back" />
+  <v-card class="history-page" flat>
+    <v-card-title class="history-heading my-2 flex items-center justify-between gap-4">
+      <div class="flex items-center flex-wrap gap-y-3">
+        <v-btn
+          icon="mdi-arrow-left"
+          size="small"
+          variant="text"
+          :aria-label="$t('ui.back_to_recorders')"
+          class="mr-2"
+          @click="$router.back"
+        />
         <span>{{ $t('records.record_history') }}</span>
         <v-btn class="ml-4" size="small" variant="tonal" @click="clearInvalidWarnVisible = true">
           {{ $t('records.clean_invalid_record') }}
@@ -23,7 +30,7 @@
       </div>
 
       <v-text-field
-        class="w-96 flex-none"
+        class="history-search flex-none"
         v-model="search"
         :label="$t('records.search')"
         prepend-inner-icon="mdi-magnify"
@@ -104,6 +111,9 @@
       ]"
       :search="search"
     >
+      <template #no-data
+        ><div class="history-empty-message">{{ $t('$vuetify.noDataText') }}</div></template
+      >
       <template v-slot:header.actions="{ column }">
         <span class="pl-3">{{ column.title }}</span>
       </template>

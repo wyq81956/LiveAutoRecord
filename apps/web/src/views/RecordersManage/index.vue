@@ -1,47 +1,57 @@
 <template>
-  <div class="relative">
-    <div class="h-screen overflow-auto" :class="{ hidden: currentRouteParentIsRecordersManage }">
-      <div class="sticky left-0 top-0 p-4 shadow-sm flex bg-[#F0F0F0] z-[1]">
-        <div class="flex flex-auto gap-4">
+  <div class="workspace">
+    <div class="workspace-home" :class="{ hidden: currentRouteParentIsRecordersManage }">
+      <div class="recorders-page">
+        <header class="page-heading">
+          <div>
+            <span class="page-eyebrow">WORKSPACE</span>
+            <h1>{{ $t('ui.recorders_title') }}</h1>
+            <p>{{ $t('ui.recorders_description') }}</p>
+          </div>
+          <v-btn :to="{ name: RouteNames.NewRecorder }" variant="flat" color="primary" prepend-icon="mdi-plus">{{
+            $t('recorders.add_channel')
+          }}</v-btn>
+        </header>
+        <div class="recorders-toolbar">
+          <v-text-field
+            :label="$t('recorders.filter')"
+            class="recorders-search"
+            v-model="filterText"
+            prepend-inner-icon="mdi-magnify"
+            hide-details="auto"
+            clearable
+          />
           <v-select
             :label="$t('recorders.sort')"
-            class="basis-64 shrink-0 grow-0"
+            class="recorders-sort"
             v-model="sortMode"
             :items="sortModes"
             :item-title="(item: SortMode) => $t(item.name)"
             :item-value="(item: SortMode) => item"
             hide-details="auto"
           />
-
-          <v-text-field :label="$t('recorders.filter')" class="flex-auto" v-model="filterText" hide-details="auto" />
-
-          <div class="flex gap-2 items-center">
-            <router-link class="h-full" :to="{ name: RouteNames.NewRecorder }" tabindex="-1">
-              <v-btn class="!h-full" stacked prepend-icon="mdi-plus" :rounded="0" size="small">
-                {{ $t('recorders.add_channel') }}
-              </v-btn>
-            </router-link>
-            <router-link class="h-full" :to="{ name: RouteNames.Records }" tabindex="-1">
-              <v-btn class="!h-full" stacked prepend-icon="mdi-history" :rounded="0" size="small">
-                {{ $t('common.record_history') }}
-              </v-btn>
-            </router-link>
-            <router-link class="h-full" :to="{ name: RouteNames.RecordersSetting }" tabindex="-1">
-              <v-btn class="!h-full" stacked prepend-icon="mdi-cog" :rounded="0" size="small">
-                {{ $t('common.settings') }}
-              </v-btn>
-            </router-link>
-          </div>
         </div>
-      </div>
-
-      <div class="flex flex-wrap gap-4 p-4">
-        <RecorderCard
-          v-for="recorder in displayingRecorders"
-          :key="recorder.id"
-          :recorder="recorder"
-          :class="normalizeClass(['flex-shrink-0 flex-grow', locale.startsWith('zh') ? 'basis-60' : 'basis-80'])"
-        />
+        <v-alert v-if="loadError" type="error" class="mb-5"
+          >{{ loadError
+          }}<v-btn variant="text" :loading="loading" @click="loadRecorders">{{ $t('settings.retry') }}</v-btn></v-alert
+        >
+        <div v-if="loading" class="text-center p-8"><v-progress-circular indeterminate color="primary" /></div>
+        <div v-else-if="!displayingRecorders.length && !loadError" class="empty-state">
+          <div class="empty-icon"><v-icon icon="mdi-video-outline" size="28" /></div>
+          <h2>{{ $t(filterText ? 'ui.no_results' : 'ui.empty_title') }}</h2>
+          <p>{{ $t(filterText ? 'ui.no_results_description' : 'ui.empty_description') }}</p>
+          <v-btn
+            v-if="!filterText"
+            :to="{ name: RouteNames.NewRecorder }"
+            variant="flat"
+            color="primary"
+            prepend-icon="mdi-plus"
+            >{{ $t('recorders.add_channel') }}</v-btn
+          >
+        </div>
+        <div v-else class="recorders-grid">
+          <RecorderCard v-for="recorder in displayingRecorders" :key="recorder.id" :recorder="recorder" />
+        </div>
       </div>
     </div>
 
@@ -49,7 +59,7 @@
     <!-- TODO: 这样设计有个缺陷，在子页刷新时，父路由也会在后台加载与请求，可以优化 -->
     <router-view v-slot="{ Component }">
       <!-- showViewIfRouteParentIsRecordersManage -->
-      <div v-if="currentRouteParentIsRecordersManage" class="absolute inset-0 h-screen overflow-auto bg-[#F0F0F0]">
+      <div v-if="currentRouteParentIsRecordersManage" class="workspace-panel">
         <component :is="Component" />
       </div>
     </router-view>
@@ -57,7 +67,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, normalizeClass, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import type { ClientRecorder } from '@autorecord/http-server'
 import { RecorderService } from '../../services/RecorderService'
 import RecorderCard from './RecorderCard.vue'
@@ -67,7 +77,7 @@ import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { LARServerService } from '../../services/LARServerService'
 
-const { t, locale } = useI18n()
+const { t } = useI18n()
 const route = useRoute()
 const currentRouteParentIsRecordersManage = computed(
   () => route.matched.length >= 2 && route.matched[route.matched.length - 2].name === RouteNames.RecordersManage,
@@ -117,18 +127,28 @@ const sortMode = ref(sortModes[0])
 const filterText = ref<string>('')
 
 // TODO: 不知道为啥直接 await 会白屏，先简单实现
-LARServerService.getSettings({}).then((settings) => {
-  sortMode.value = sortModes.find((mode) => mode.id === settings.sortMode) ?? sortModes[0]
-})
+let savedSortMode = sortMode.value.id
+LARServerService.getSettings({})
+  .then((settings) => {
+    const mode = sortModes.find((mode) => mode.id === settings.sortMode) ?? sortModes[0]
+    savedSortMode = mode.id
+    sortMode.value = mode
+  })
+  .catch(console.error)
 watch(sortMode, async ({ id }) => {
-  const settings = await LARServerService.getSettings({})
-  await LARServerService.setSettings({ ...settings, sortMode: id })
+  if (id === savedSortMode) return
+  try {
+    await LARServerService.setSettings({ sortMode: id })
+    savedSortMode = id
+  } catch (error) {
+    console.error(error)
+  }
 })
 
 const displayingRecorders = computed(() => {
   const fields: (keyof ClientRecorder)[] = ['remarks', 'channelId']
   const result = recorders.value.filter((recorder) =>
-    fields.some((field) => recorder[field]?.toString().includes(filterText.value)),
+    fields.some((field) => recorder[field]?.toString().includes(filterText.value ?? '')),
   )
 
   assert(sortMode.value)
@@ -162,8 +182,18 @@ const displayingRecorders = computed(() => {
   return result
 })
 
-onMounted(async () => {
-  const items = await RecorderService.getReactiveRecorders()
-  recorders.value = items
-})
+const loading = ref(true)
+const loadError = ref('')
+async function loadRecorders() {
+  loading.value = true
+  loadError.value = ''
+  try {
+    recorders.value = await RecorderService.getReactiveRecorders()
+  } catch (error) {
+    loadError.value = t('settings.load_failed', { msg: error instanceof Error ? error.message : String(error) })
+  } finally {
+    loading.value = false
+  }
+}
+onMounted(loadRecorders)
 </script>

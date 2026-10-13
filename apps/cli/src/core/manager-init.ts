@@ -85,9 +85,9 @@ export async function initManager(): Promise<void> {
   })
 
   recorderManager.on('Updated', () => {
-    writeJSONFileSync<ManagerConfig>(
-      managerConfigPath,
-      pick(
+    writeJSONFileSync<ManagerConfig>(managerConfigPath, {
+      ...readJSONFileSync<ManagerConfig>(managerConfigPath, defaultManagerConfig),
+      ...pick(
         recorderManager,
         'savePathRule',
         'autoRemoveSystemReservedChars',
@@ -95,7 +95,7 @@ export async function initManager(): Promise<void> {
         'autoCheckInterval',
         'ffmpegOutputArgs',
       ),
-    )
+    })
   })
 
   // 从 DB 加载 recorders

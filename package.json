@@ -9,6 +9,7 @@
   "scripts": {
     "build": "turbo run build",
     "typecheck": "turbo run typecheck",
+    "test:settings": "node --experimental-strip-types --test tests/settings-state.test.mjs tests/settings-api.test.mjs",
     "app:dev": "turbo run build --filter=@autorecord/electron^... && concurrently \"pnpm -F @autorecord/http-server watch\" \"pnpm -F @autorecord/electron dev\"",
     "app:build": "turbo run build --filter=@autorecord/electron^... && pnpm -F @autorecord/electron app:build",
     "dev:server": "turbo run build --filter=@autorecord/http-server^... && pnpm -F @autorecord/http-server start:dev",

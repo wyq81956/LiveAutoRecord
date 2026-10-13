@@ -8,6 +8,7 @@ const baseURL = 'http://localhost:8085/api'
 
 const requester = axios.create({
   baseURL,
+  timeout: 10_000,
 })
 
 // 这里是 web 与外部系统（http-server）对接的地方，整体上对应的是 server 的路由部分（而不是 API 的实现部分）。

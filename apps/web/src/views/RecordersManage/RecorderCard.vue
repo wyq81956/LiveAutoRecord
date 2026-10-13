@@ -1,12 +1,14 @@
 <template>
-  <v-card class="flex flex-col overflow-visible">
-    <v-badge :model-value="recorder.state === 'recording'" color="green" bordered location="left top">
-      <v-card-title class="flex items-center">
+  <v-card class="recorder-card flex flex-col">
+    <div class="recorder-heading">
+      <span class="recorder-platform-icon"><v-icon icon="mdi-video-outline" size="18" /></span>
+      <h2>
         {{ recorder.remarks || `${$t(`platform_name.${recorder.providerId}`)} ${recorder.channelId}` }}
-      </v-card-title>
-    </v-badge>
+      </h2>
+      <span v-if="recorder.state === 'recording'" class="recording-dot" :aria-label="$t('recorder.state_recording')" />
+    </div>
 
-    <v-card-text class="pt-0 grid grid-cols-[auto_1fr] items-center gap-x-1 flex-grow">
+    <v-card-text class="recorder-details grid grid-cols-[auto_1fr] items-center flex-grow">
       <span>{{ $t('recorder.platform') }}:</span>
       <span>{{ $t(`platform_name.${recorder.providerId}`) }}</span>
 
@@ -24,13 +26,21 @@
       <div>
         <v-tooltip :text="$t('recorder.ffmpeg_args_tip')" :disabled="!ffmpegArgsDialogAvailable">
           <template v-slot:activator="{ props }">
-            <span
+            <v-chip
               :class="normalizeClass([ffmpegArgsDialogAvailable && 'hover:underline cursor-pointer'])"
               @click="ffmpegArgsDialogAvailable && (ffmpegArgsDialogVisible = true)"
               v-bind="props"
+              :color="
+                recorder.state === 'recording'
+                  ? 'success'
+                  : recorder.state === 'stopping-record'
+                    ? 'warning'
+                    : undefined
+              "
+              size="small"
             >
               {{ stateText }}
-            </span>
+            </v-chip>
           </template>
         </v-tooltip>
 
@@ -46,8 +56,8 @@
 
       <span :title="$t('recorder.disable_auto_check')">{{ $t('recorder.disable') }}:</span>
       <v-switch
-        class="small-switch"
-        color="#880000"
+        class="settings-toggle"
+        color="warning"
         hide-details
         inset
         v-model="recorder.disableAutoCheck"
@@ -144,17 +154,3 @@ watch(
   },
 )
 </script>
-
-<style scoped>
-.small-switch {
-  :deep(&.v-switch .v-selection-control) {
-    min-height: auto;
-  }
-
-  :deep(.v-selection-control__wrapper) {
-    height: auto;
-    transform: scale(0.5);
-    transform-origin: left;
-  }
-}
-</style>

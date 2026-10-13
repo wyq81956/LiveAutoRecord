@@ -78,9 +78,9 @@ export async function initRecorderManager(serverOpts: ServerOpts): Promise<void>
   })
 
   recorderManager.on('Updated', () => {
-    writeJSONFileSync<ManagerConfig>(
-      managerConfigPath,
-      pick(
+    writeJSONFileSync<ManagerConfig>(managerConfigPath, {
+      ...readJSONFileSync<ManagerConfig>(managerConfigPath, defaultManagerConfig, serverOpts),
+      ...pick(
         recorderManager,
         'savePathRule',
         'autoRemoveSystemReservedChars',
@@ -88,7 +88,7 @@ export async function initRecorderManager(serverOpts: ServerOpts): Promise<void>
         'autoCheckInterval',
         'ffmpegOutputArgs',
       ),
-    )
+    })
   })
 
   // TODO: 目前持久化的实现方式是不支持多实例同时运行的，考虑在程序运行期间把数据文件持续占用防止意外操作

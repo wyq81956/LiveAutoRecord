@@ -1,5 +1,5 @@
 <template>
-  <v-card class="mx-auto my-4 max-w-xl">
+  <v-card class="editor-page">
     <v-card-title>
       <template v-if="isCreating">{{ $t('edit.create_title') }}</template>
       <template v-else>{{ $t('edit.edit_title') }} {{ recorderId }}</template>
@@ -76,7 +76,7 @@
     </v-card-item>
 
     <v-card-actions class="border-t justify-end">
-      <v-btn @click="applyOrAddRecorder" :loading="operating || parsing">
+      <v-btn @click="applyOrAddRecorder" variant="flat" color="primary" :loading="operating || parsing">
         {{ parsing ? $t('edit.waiting_for_parsing') : isCreating ? $t('common.add') : $t('common.apply') }}
       </v-btn>
       <v-btn v-if="!isCreating" @click="removeRecorder" :loading="operating">{{ $t('common.delete') }}</v-btn>

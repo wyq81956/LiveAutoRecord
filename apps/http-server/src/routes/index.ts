@@ -7,7 +7,7 @@ import { createRouter as createSettingRouter } from './setting'
 import { createRouter as createLoggerRouter } from './logger'
 import { createRouter as createProviderRouter } from './provider'
 import { ServerOpts } from '../types'
-// import { respond } from './utils'
+import { SettingsValidationError } from '../settings'
 
 export function createRouter(serverOpts: ServerOpts) {
   const { logger } = serverOpts
@@ -25,6 +25,10 @@ export function createRouter(serverOpts: ServerOpts) {
   router.use(providerRoutes)
 
   const handle: ErrorRequestHandler = (err: unknown, req, res, next) => {
+    if (res.headersSent) {
+      next(err)
+      return
+    }
     // 裁剪体积过大的 AxiosError
     if (err != null && typeof err === 'object' && 'isAxiosError' in err) {
       delete err['request']
@@ -32,12 +36,8 @@ export function createRouter(serverOpts: ServerOpts) {
     }
 
     logger.error('RouterError', err)
-    if (err instanceof Error) {
-      // respond(res, { error: err.message }).status(500)
-      return
-    }
-
-    // respond(res, { error: String(err) }).status(500)
+    const message = err instanceof Error ? err.message : String(err)
+    res.status(err instanceof SettingsValidationError ? 400 : message === '404' ? 404 : 500).json({ error: message })
   }
   router.use(handle)
 

@@ -56,7 +56,22 @@ export function createRouter(serverOpts: ServerOpts) {
         return
       }
 
-      const config = req.body.config as Record<string, string>
+      const rawConfig = req.body?.config
+      if (
+        !rawConfig ||
+        typeof rawConfig !== 'object' ||
+        Array.isArray(rawConfig) ||
+        Object.values(rawConfig).some((value) => typeof value !== 'string') ||
+        !Object.values(rawConfig).some((value) => (value as string).trim())
+      ) {
+        res
+          .status(400)
+          .json({ error: 'Auth config must contain non-empty credentials. Use DELETE to clear authentication.' })
+        return
+      }
+      const config = Object.fromEntries(
+        Object.entries(rawConfig).map(([key, value]) => [key, (value as string).trim()]),
+      )
       provider.setAuth(config)
       saveProviderAuthConfig(provider.id, config)
 

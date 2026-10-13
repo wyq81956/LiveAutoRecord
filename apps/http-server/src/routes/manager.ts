@@ -3,6 +3,7 @@ import { defaultManagerConfig, recorderManager } from '../manager'
 import { assertStringType, pick } from '../utils'
 import { API } from './api_types'
 import { asyncRouteHandler } from './utils'
+import { validateManagerPatch } from '../settings'
 
 const router = Router()
 
@@ -59,8 +60,8 @@ router
     res.json({ payload: getManager({}) })
   })
   .patch((req, res) => {
+    validateManagerPatch(req.body)
     const args = pick(
-      // TODO: 这里先不做 schema 校验，以后再加
       (req.body ?? {}) as API.updateManager.Args,
       'savePathRule',
       'autoRemoveSystemReservedChars',

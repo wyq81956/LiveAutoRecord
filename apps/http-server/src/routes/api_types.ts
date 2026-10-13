@@ -166,7 +166,7 @@ export namespace API {
   }
 
   export namespace setSettings {
-    export type Args = Settings
+    export type Args = Partial<Settings>
 
     export type Resp = Settings
   }

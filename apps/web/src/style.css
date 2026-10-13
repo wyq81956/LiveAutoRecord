@@ -4,6 +4,7 @@
    utilities 不放入 layer，否则会被无层级的 vuetify 样式覆盖（CSS 规范：unlayered > layered）。 */
 @import 'tailwindcss/theme' layer(theme);
 @import 'tailwindcss/utilities';
+@import './beui.css';
 
 *,
 ::before,

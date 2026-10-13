@@ -15,12 +15,38 @@ import { i18n } from './i18n'
 import './style.css'
 
 // TODO: 先简单点，不做初始化的 loading 之类的，出问题顶多 B/S 模式下的通知出问题
-void RecordService.init()
+void RecordService.init().catch(console.error)
 InteractionService.blurSomeElementOnPressEscape = true
 
 const vuetify = createVuetify({
   components,
   directives,
+  theme: {
+    defaultTheme: 'larLight',
+    themes: {
+      larLight: {
+        dark: false,
+        colors: {
+          primary: '#0285f7',
+          secondary: '#f4f4f5',
+          background: '#fafafa',
+          surface: '#ffffff',
+          success: '#15803d',
+          error: '#dc2626',
+          warning: '#a16207',
+        },
+      },
+    },
+  },
+  defaults: {
+    VCard: { elevation: 0, rounded: 'xl' },
+    VBtn: { rounded: 'lg', elevation: 0, style: 'text-transform: none; letter-spacing: normal', ripple: false },
+    VTextField: { variant: 'outlined', density: 'comfortable', color: 'primary', rounded: 'lg', hideDetails: 'auto' },
+    VTextarea: { variant: 'outlined', density: 'comfortable', color: 'primary', rounded: 'lg' },
+    VSelect: { variant: 'outlined', density: 'comfortable', color: 'primary', rounded: 'lg', hideDetails: 'auto' },
+    VSwitch: { color: 'primary', inset: true, hideDetails: true },
+    VAlert: { variant: 'tonal', rounded: 'lg', density: 'compact' },
+  },
   locale: {
     adapter: createVueI18nAdapter({ i18n, useI18n }),
   },

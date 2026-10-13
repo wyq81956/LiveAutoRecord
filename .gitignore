@@ -28,5 +28,8 @@ dist-ssr
 # Turbo
 .turbo
 
+# 本地界面预览截图
+.ui-preview/
+
 # Claude
 .claude/settings.local.json
